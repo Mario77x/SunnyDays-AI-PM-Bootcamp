@@ -1,2 +1,1 @@
-# SunnyDays-AI-PM-Bootcamp
-Repository created with SnapDev
+# Welcome to your Snapdev app
