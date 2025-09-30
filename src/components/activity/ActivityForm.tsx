@@ -193,15 +193,38 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
     setCurrentStep(step);
   };
 
+  // Enhanced skip logic - more granular requirements
   const canSkipToStep = (step: typeof currentStep) => {
+    const hasTitle = title.trim().length > 0;
+    const hasDate = selectedDate !== null;
+    
     switch (step) {
-      case 'basic': return true;
-      case 'datetime': return title.trim().length > 0;
-      case 'weather': return title.trim().length > 0 && selectedDate !== null;
-      case 'details': return title.trim().length > 0 && selectedDate !== null;
-      case 'invites': return title.trim().length > 0 && selectedDate !== null;
-      default: return false;
+      case 'basic': 
+        return true; // Can always go back to basic
+      case 'datetime': 
+        return hasTitle; // Need title to proceed to date selection
+      case 'weather': 
+        return hasTitle && hasDate; // Need title and date for weather
+      case 'details': 
+        return hasTitle && hasDate; // Need title and date for details
+      case 'invites': 
+        return hasTitle && hasDate; // Need title and date for invites
+      default: 
+        return false;
     }
+  };
+
+  // Get next available step for skipping
+  const getNextSkippableStep = (): typeof currentStep | null => {
+    const steps: (typeof currentStep)[] = ['basic', 'datetime', 'weather', 'details', 'invites'];
+    const currentIndex = steps.indexOf(currentStep);
+    
+    for (let i = currentIndex + 1; i < steps.length; i++) {
+      if (canSkipToStep(steps[i])) {
+        return steps[i];
+      }
+    }
+    return null;
   };
 
   const handleSubmit = async () => {
@@ -306,6 +329,40 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
     </div>
   );
 
+  // Render skip button component
+  const renderSkipButton = (targetStep?: typeof currentStep) => {
+    const nextStep = targetStep || getNextSkippableStep();
+    const canSkip = nextStep && canSkipToStep(nextStep);
+    
+    const getStepName = (step: typeof currentStep) => {
+      switch (step) {
+        case 'datetime': return language === 'nl' ? 'datum' : 'date';
+        case 'weather': return language === 'nl' ? 'weer' : 'weather';
+        case 'details': return language === 'nl' ? 'details' : 'details';
+        case 'invites': return language === 'nl' ? 'uitnodigingen' : 'invites';
+        default: return '';
+      }
+    };
+
+    return (
+      <Button
+        variant="outline"
+        onClick={() => nextStep && goToStep(nextStep)}
+        disabled={!canSkip}
+        className={`px-3 h-12 active:scale-95 transition-transform ${
+          !canSkip ? 'opacity-40 cursor-not-allowed blur-sm' : ''
+        }`}
+        title={
+          canSkip 
+            ? `${language === 'nl' ? 'Overslaan naar' : 'Skip to'} ${getStepName(nextStep!)}`
+            : language === 'nl' ? 'Vul eerst de verplichte velden in' : 'Fill required fields first'
+        }
+      >
+        <SkipForward className="h-4 w-4" />
+      </Button>
+    );
+  };
+
   const renderBasicInfo = () => (
     <Card className="border-0 shadow-lg">
       <CardHeader className="pb-3 sm:pb-4">
@@ -363,16 +420,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           >
             {t('activity.form.nextDateTime')}
           </Button>
-          {canSkipToStep('datetime') && (
-            <Button
-              variant="outline"
-              onClick={() => goToStep('datetime')}
-              className="px-3 h-12 active:scale-95 transition-transform"
-              title={language === 'nl' ? 'Overslaan naar datum' : 'Skip to date'}
-            >
-              <SkipForward className="h-4 w-4" />
-            </Button>
-          )}
+          {renderSkipButton('datetime')}
         </div>
       </CardContent>
     </Card>
@@ -396,7 +444,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         <DateTimePicker
           selectedDate={selectedDate}
           selectedTime={time}
@@ -404,6 +452,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           onTimeChange={setTime}
           onNext={handleWeatherCheck}
         />
+        
+        {/* Skip button for datetime step */}
+        <div className="flex justify-end">
+          {renderSkipButton('weather')}
+        </div>
       </CardContent>
     </Card>
   );
@@ -502,16 +555,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
                     >
                       {t('activity.form.continueWithPlan')}
                     </Button>
-                    {canSkipToStep('details') && (
-                      <Button
-                        variant="outline"
-                        onClick={() => goToStep('details')}
-                        className="px-3 h-12 active:scale-95 transition-transform"
-                        title={language === 'nl' ? 'Overslaan naar details' : 'Skip to details'}
-                      >
-                        <SkipForward className="h-4 w-4" />
-                      </Button>
-                    )}
+                    {renderSkipButton('details')}
                   </div>
                 </div>
               ) : (
@@ -527,13 +571,16 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
                       >
                         {t('activity.form.continueAnyway')}
                       </Button>
-                      <Button 
-                        onClick={() => handleWeatherDecision(false)}
-                        variant="outline"
-                        className="w-full h-12 active:scale-95 transition-transform"
-                      >
-                        {t('activity.form.chooseOtherDate')}
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button 
+                          onClick={() => handleWeatherDecision(false)}
+                          variant="outline"
+                          className="flex-1 h-12 active:scale-95 transition-transform"
+                        >
+                          {t('activity.form.chooseOtherDate')}
+                        </Button>
+                        {renderSkipButton('details')}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -585,16 +632,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           >
             {t('activity.form.nextInvite')}
           </Button>
-          {canSkipToStep('invites') && (
-            <Button
-              variant="outline"
-              onClick={() => goToStep('invites')}
-              className="px-3 h-12 active:scale-95 transition-transform"
-              title={language === 'nl' ? 'Overslaan naar uitnodigingen' : 'Skip to invites'}
-            >
-              <SkipForward className="h-4 w-4" />
-            </Button>
-          )}
+          {renderSkipButton('invites')}
         </div>
       </CardContent>
     </Card>
