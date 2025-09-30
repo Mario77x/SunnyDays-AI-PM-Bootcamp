@@ -106,7 +106,11 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             />
           </div>
           
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 transition-transform" 
+            disabled={isLoading}
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -123,8 +127,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             {t('auth.hasAccount')}{' '}
             <button
               onClick={onSwitchToLogin}
-              className="hover:underline"
-              style={{ color: '#ff9900' }}
+              className="text-blue-600 hover:text-blue-700 hover:underline transition-colors"
               disabled={isLoading}
             >
               {t('auth.loginHere')}

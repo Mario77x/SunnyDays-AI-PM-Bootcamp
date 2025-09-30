@@ -11,9 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getWeatherAssessment, sendInvitations } from '@/services/weatherService';
 import { saveActivity } from '@/services/activityService';
-import { showSuccess, showError } from '@/utils/toast';
+import { showSuccess, showError, showInfo } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Users, Sun, CloudRain, Loader2, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Sun, CloudRain, Loader2, AlertTriangle, CheckCircle, ChevronLeft, SkipForward } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl, enUS } from 'date-fns/locale';
 
@@ -44,6 +44,10 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
   const [currentStep, setCurrentStep] = useState<'basic' | 'datetime' | 'weather' | 'details' | 'invites'>('basic');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftId, setDraftId] = useState<string>(activity?.id || '');
+
+  // Track original date/time for optimization
+  const [originalDate, setOriginalDate] = useState<Date | null>(activity?.date ? new Date(activity.date) : null);
+  const [originalTime, setOriginalTime] = useState<string>(activity?.time || '');
 
   // Auto-save draft functionality
   const saveDraft = React.useCallback(() => {
@@ -107,14 +111,33 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
     navigate('/dashboard');
   };
 
+  // Check if date/time changed from original (for editing optimization)
+  const hasDateTimeChanged = () => {
+    if (!isEditing || !originalDate) return true;
+    
+    const dateChanged = !selectedDate || selectedDate.getTime() !== originalDate.getTime();
+    const timeChanged = time !== originalTime;
+    
+    return dateChanged || timeChanged;
+  };
+
   const handleWeatherCheck = async () => {
     if (!selectedDate) return;
     
     saveDraft();
+    setCurrentStep('weather');
+    
+    // If editing and date/time hasn't changed, skip API call
+    if (isEditing && !hasDateTimeChanged() && weatherAssessment) {
+      showInfo(language === 'nl' 
+        ? 'Datum/tijd ongewijzigd - bestaand weeradvies wordt getoond' 
+        : 'Date/time unchanged - showing existing weather advice'
+      );
+      return;
+    }
     
     setIsLoadingWeather(true);
     setWeatherAssessment(null);
-    setCurrentStep('weather');
     
     try {
       const [assessment] = await Promise.all([
@@ -161,6 +184,23 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
         break;
       default:
         break;
+    }
+  };
+
+  // Step navigation functions
+  const goToStep = (step: typeof currentStep) => {
+    saveDraft();
+    setCurrentStep(step);
+  };
+
+  const canSkipToStep = (step: typeof currentStep) => {
+    switch (step) {
+      case 'basic': return true;
+      case 'datetime': return title.trim().length > 0;
+      case 'weather': return title.trim().length > 0 && selectedDate !== null;
+      case 'details': return title.trim().length > 0 && selectedDate !== null;
+      case 'invites': return title.trim().length > 0 && selectedDate !== null;
+      default: return false;
     }
   };
 
@@ -227,11 +267,41 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
         <span>{language === 'nl' ? 'Stap' : 'Step'} {getStepNumber()} {language === 'nl' ? 'van' : 'of'} 5</span>
         <span>{Math.round((getStepNumber() / 5) * 100)}%</span>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
+      <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
         <div 
           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
           style={{ width: `${(getStepNumber() / 5) * 100}%` }}
         ></div>
+      </div>
+      
+      {/* Step Navigation Dots */}
+      <div className="flex justify-center space-x-2">
+        {['basic', 'datetime', 'weather', 'details', 'invites'].map((step, index) => {
+          const stepName = step as typeof currentStep;
+          const isActive = currentStep === stepName;
+          const isCompleted = getStepNumber() > index + 1;
+          const canSkip = canSkipToStep(stepName);
+          
+          return (
+            <button
+              key={step}
+              onClick={() => canSkip ? goToStep(stepName) : null}
+              disabled={!canSkip}
+              className={`w-8 h-8 rounded-full text-xs font-medium transition-all ${
+                isActive 
+                  ? 'bg-blue-600 text-white' 
+                  : isCompleted 
+                    ? 'bg-green-500 text-white' 
+                    : canSkip 
+                      ? 'bg-gray-300 text-gray-600 hover:bg-gray-400' 
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
+              title={`${language === 'nl' ? 'Stap' : 'Step'} ${index + 1}`}
+            >
+              {index + 1}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -285,13 +355,25 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           />
         </div>
 
-        <Button 
-          onClick={() => setCurrentStep('datetime')} 
-          className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base font-medium active:scale-95 transition-transform"
-          disabled={!title.trim()}
-        >
-          {t('activity.form.nextDateTime')}
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => setCurrentStep('datetime')} 
+            className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 text-base font-medium active:scale-95 transition-transform"
+            disabled={!title.trim()}
+          >
+            {t('activity.form.nextDateTime')}
+          </Button>
+          {canSkipToStep('datetime') && (
+            <Button
+              variant="outline"
+              onClick={() => goToStep('datetime')}
+              className="px-3 h-12 active:scale-95 transition-transform"
+              title={language === 'nl' ? 'Overslaan naar datum' : 'Skip to date'}
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -413,12 +495,24 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
                   <p className="text-sm text-gray-600 text-center bg-green-50 p-3 sm:p-4 rounded-lg">
                     {t('activity.form.weatherGoodNote')}
                   </p>
-                  <Button 
-                    onClick={() => handleWeatherDecision(true)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
-                  >
-                    {t('activity.form.continueWithPlan')}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => handleWeatherDecision(true)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
+                    >
+                      {t('activity.form.continueWithPlan')}
+                    </Button>
+                    {canSkipToStep('details') && (
+                      <Button
+                        variant="outline"
+                        onClick={() => goToStep('details')}
+                        className="px-3 h-12 active:scale-95 transition-transform"
+                        title={language === 'nl' ? 'Overslaan naar details' : 'Skip to details'}
+                      >
+                        <SkipForward className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -484,12 +578,24 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           />
         </div>
 
-        <Button 
-          onClick={() => setCurrentStep('invites')} 
-          className="w-full bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
-        >
-          {t('activity.form.nextInvite')}
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => setCurrentStep('invites')} 
+            className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
+          >
+            {t('activity.form.nextInvite')}
+          </Button>
+          {canSkipToStep('invites') && (
+            <Button
+              variant="outline"
+              onClick={() => goToStep('invites')}
+              className="px-3 h-12 active:scale-95 transition-transform"
+              title={language === 'nl' ? 'Overslaan naar uitnodigingen' : 'Skip to invites'}
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
