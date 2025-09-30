@@ -18,22 +18,32 @@ const ActivityEdit: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !id) {
-      navigate('/dashboard');
-      return;
-    }
+    const fetchActivity = async () => {
+      if (!user || !id) {
+        navigate('/dashboard');
+        return;
+      }
 
-    const userActivities = getActivities(user.id);
-    const foundActivity = userActivities.find(a => a.id === id);
-    
-    if (!foundActivity) {
-      showError(t('message.activityNotFound'));
-      navigate('/dashboard');
-      return;
-    }
+      try {
+        const userActivities = await getActivities(user.id);
+        const foundActivity = userActivities.find(a => a.id === id);
+        
+        if (!foundActivity) {
+          showError(t('message.activityNotFound'));
+          navigate('/dashboard');
+          return;
+        }
 
-    setActivity(foundActivity);
-    setLoading(false);
+        setActivity(foundActivity);
+      } catch (error) {
+        showError(t('error.generic'));
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivity();
   }, [user, id, navigate, t]);
 
   if (!user || loading) return null;

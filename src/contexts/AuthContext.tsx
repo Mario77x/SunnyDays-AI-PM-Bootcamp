@@ -92,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Store the token
       setAuthToken(response.token);
+      api.updateAuthToken(response.token);
       
       // Fetch user info
       const userResponse = await api.get<UserResponse>(API_ENDPOINTS.AUTH.ME);
@@ -128,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Store the token
       setAuthToken(response.token);
+      api.updateAuthToken(response.token);
       
       // Fetch user info
       const userResponse = await api.get<UserResponse>(API_ENDPOINTS.AUTH.ME);
@@ -192,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear all auth data
     setUser(null);
     removeAuthToken();
+    api.updateAuthToken('');
     localStorage.removeItem('sunnydays_user');
   };
 

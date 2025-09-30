@@ -36,6 +36,10 @@ const convertToActivity = (response: ActivityResponse, userId: string): Activity
 export const getActivities = async (userId: string): Promise<Activity[]> => {
   try {
     const response = await api.get<ActivityResponse[]>(API_ENDPOINTS.ACTIVITIES.BASE);
+    if (!Array.isArray(response)) {
+      console.error('API did not return an array for activities:', response);
+      return getActivitiesFromLocalStorage(userId);
+    }
     return response.map(activity => convertToActivity(activity, userId));
   } catch (error) {
     console.error('Error fetching activities:', error);

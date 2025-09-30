@@ -51,10 +51,15 @@ const Dashboard: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileMenu]);
 
-  const loadActivities = () => {
+  const loadActivities = async () => {
     if (user) {
-      const userActivities = getActivities(user.id);
-      setActivities(userActivities);
+      try {
+        const userActivities = await getActivities(user.id);
+        setActivities(userActivities);
+      } catch (error) {
+        console.error('Error loading activities:', error);
+        setActivities([]); // Set empty array as fallback
+      }
     }
   };
 

@@ -45,7 +45,7 @@ export const ActivitySearch: React.FC<ActivitySearchProps> = ({
     if (weatherFilter !== 'all') {
       filtered = filtered.filter(activity => {
         if (!activity.weatherAssessment) return false;
-        return weatherFilter === 'good' 
+        return weatherFilter === 'good'
           ? activity.weatherAssessment.recommendation === 'good'
           : activity.weatherAssessment.recommendation === 'bad';
       });
@@ -54,7 +54,7 @@ export const ActivitySearch: React.FC<ActivitySearchProps> = ({
     // Filter by invitees
     if (hasInviteesFilter !== 'all') {
       filtered = filtered.filter(activity => {
-        return hasInviteesFilter === 'yes' 
+        return hasInviteesFilter === 'yes'
           ? activity.invitees.length > 0
           : activity.invitees.length === 0;
       });
@@ -63,14 +63,14 @@ export const ActivitySearch: React.FC<ActivitySearchProps> = ({
     // Filter by location
     if (hasLocationFilter !== 'all') {
       filtered = filtered.filter(activity => {
-        return hasLocationFilter === 'yes' 
+        return hasLocationFilter === 'yes'
           ? !!activity.location
           : !activity.location;
       });
     }
 
     onFilteredActivities(filtered);
-  }, [searchTerm, weatherFilter, hasInviteesFilter, hasLocationFilter, tabActivities, onFilteredActivities]);
+  }, [searchTerm, weatherFilter, hasInviteesFilter, hasLocationFilter, activeTab, activities]);
 
   const clearAllFilters = () => {
     setSearchTerm('');

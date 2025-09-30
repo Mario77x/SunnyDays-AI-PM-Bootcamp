@@ -55,6 +55,7 @@ export const apiRequest = async <T = any>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
+  // Always get the latest token from localStorage
   const token = getAuthToken();
   
   const defaultHeaders: HeadersInit = {
@@ -126,4 +127,7 @@ export const api = {
   // DELETE request
   delete: <T = any>(url: string, options?: RequestInit): Promise<T> =>
     apiRequest<T>(url, { ...options, method: 'DELETE' }),
+  
+  // This is no longer needed as we fetch the token on every request.
+  updateAuthToken: (token: string) => {}
 };
