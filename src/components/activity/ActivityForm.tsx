@@ -13,7 +13,7 @@ import { getWeatherAssessment, sendInvitations } from '@/services/weatherService
 import { saveActivity } from '@/services/activityService';
 import { showSuccess, showError, showInfo } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Users, Sun, CloudRain, Loader2, AlertTriangle, CheckCircle, ChevronLeft, SkipForward } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Sun, CloudRain, Loader2, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl, enUS } from 'date-fns/locale';
 
@@ -355,25 +355,13 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button 
-            onClick={() => setCurrentStep('datetime')} 
-            className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 text-base font-medium active:scale-95 transition-transform"
-            disabled={!title.trim()}
-          >
-            {t('activity.form.nextDateTime')}
-          </Button>
-          {canSkipToStep('datetime') && (
-            <Button
-              variant="outline"
-              onClick={() => goToStep('datetime')}
-              className="px-3 h-12 active:scale-95 transition-transform"
-              title={language === 'nl' ? 'Overslaan naar datum' : 'Skip to date'}
-            >
-              <SkipForward className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <Button 
+          onClick={() => setCurrentStep('datetime')} 
+          className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base font-medium active:scale-95 transition-transform"
+          disabled={!title.trim()}
+        >
+          {t('activity.form.nextDateTime')}
+        </Button>
       </CardContent>
     </Card>
   );
@@ -495,24 +483,12 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
                   <p className="text-sm text-gray-600 text-center bg-green-50 p-3 sm:p-4 rounded-lg">
                     {t('activity.form.weatherGoodNote')}
                   </p>
-                  <div className="flex gap-3">
-                    <Button 
-                      onClick={() => handleWeatherDecision(true)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
-                    >
-                      {t('activity.form.continueWithPlan')}
-                    </Button>
-                    {canSkipToStep('details') && (
-                      <Button
-                        variant="outline"
-                        onClick={() => goToStep('details')}
-                        className="px-3 h-12 active:scale-95 transition-transform"
-                        title={language === 'nl' ? 'Overslaan naar details' : 'Skip to details'}
-                      >
-                        <SkipForward className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                  <Button 
+                    onClick={() => handleWeatherDecision(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
+                  >
+                    {t('activity.form.continueWithPlan')}
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -578,24 +554,12 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({ activity, isEditing 
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button 
-            onClick={() => setCurrentStep('invites')} 
-            className="flex-1 bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
-          >
-            {t('activity.form.nextInvite')}
-          </Button>
-          {canSkipToStep('invites') && (
-            <Button
-              variant="outline"
-              onClick={() => goToStep('invites')}
-              className="px-3 h-12 active:scale-95 transition-transform"
-              title={language === 'nl' ? 'Overslaan naar uitnodigingen' : 'Skip to invites'}
-            >
-              <SkipForward className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <Button 
+          onClick={() => setCurrentStep('invites')} 
+          className="w-full bg-blue-600 hover:bg-blue-700 h-12 active:scale-95 transition-transform"
+        >
+          {t('activity.form.nextInvite')}
+        </Button>
       </CardContent>
     </Card>
   );
