@@ -5,6 +5,16 @@ import os
 from contextlib import asynccontextmanager
 from typing import Dict, Any
 import logging
+from dotenv import load_dotenv
+
+# Import routers and database initialization
+from auth_router import router as auth_router
+from activities_router import router as activities_router
+from weather_advice_router import router as weather_advice_router
+from database import init_user_database, init_activity_database, init_weather_advice_database
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +45,22 @@ async def lifespan(app: FastAPI):
         # Test the connection
         await db_client.admin.command('ping')
         logger.info("Successfully connected to MongoDB")
+        
+        # Initialize user database
+        user_db = init_user_database(database)
+        await user_db.create_indexes()
+        logger.info("User database initialized")
+        
+        # Initialize activity database
+        activity_db = init_activity_database(database)
+        await activity_db.create_indexes()
+        logger.info("Activity database initialized")
+        
+        # Initialize weather advice database
+        weather_advice_db = init_weather_advice_database(database)
+        await weather_advice_db.create_indexes()
+        logger.info("Weather advice database initialized")
+        
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB: {e}")
         raise
@@ -56,7 +82,7 @@ app = FastAPI(
 )
 
 # Configure CORS
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5137").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -64,6 +90,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(auth_router)
+app.include_router(activities_router)
+app.include_router(weather_advice_router)
 
 
 @app.get("/healthz")
