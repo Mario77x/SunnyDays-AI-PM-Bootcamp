@@ -26,6 +26,9 @@ const ActivityEdit: React.FC = () => {
 
       try {
         const userActivities = await getActivities(user.id);
+        if (!Array.isArray(userActivities)) {
+          throw new Error("Activities is not an array");
+        }
         const foundActivity = userActivities.find(a => a.id === id);
         
         if (!foundActivity) {

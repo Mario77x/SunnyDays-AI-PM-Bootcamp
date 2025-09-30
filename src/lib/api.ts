@@ -38,15 +38,19 @@ export interface ApiError {
 // Token management
 export const TOKEN_KEY = 'sunnydays_token';
 
+let inMemoryToken: string | null = null;
+
 export const getAuthToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY);
+  return inMemoryToken || localStorage.getItem(TOKEN_KEY);
 };
 
 export const setAuthToken = (token: string): void => {
+  inMemoryToken = token;
   localStorage.setItem(TOKEN_KEY, token);
 };
 
 export const removeAuthToken = (): void => {
+  inMemoryToken = null;
   localStorage.removeItem(TOKEN_KEY);
 };
 
@@ -55,7 +59,6 @@ export const apiRequest = async <T = any>(
   url: string,
   options: RequestInit = {}
 ): Promise<T> => {
-  // Always get the latest token from localStorage
   const token = getAuthToken();
   
   const defaultHeaders: HeadersInit = {
@@ -128,6 +131,5 @@ export const api = {
   delete: <T = any>(url: string, options?: RequestInit): Promise<T> =>
     apiRequest<T>(url, { ...options, method: 'DELETE' }),
   
-  // This is no longer needed as we fetch the token on every request.
-  updateAuthToken: (token: string) => {}
+  // This is no longer needed as we have a better in-memory token management
 };

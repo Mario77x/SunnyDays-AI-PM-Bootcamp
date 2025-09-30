@@ -29,6 +29,11 @@ export const ActivitySearch: React.FC<ActivitySearchProps> = ({
   const tabActivities = activities.filter(activity => activity.status === activeTab);
 
   React.useEffect(() => {
+    if (!Array.isArray(activities)) {
+      onFilteredActivities([]);
+      return;
+    }
+    const tabActivities = activities.filter(activity => activity.status === activeTab);
     let filtered = tabActivities;
 
     // Search by title, description, or location
@@ -70,7 +75,7 @@ export const ActivitySearch: React.FC<ActivitySearchProps> = ({
     }
 
     onFilteredActivities(filtered);
-  }, [searchTerm, weatherFilter, hasInviteesFilter, hasLocationFilter, activeTab, activities]);
+  }, [searchTerm, weatherFilter, hasInviteesFilter, hasLocationFilter, activeTab, activities, onFilteredActivities]);
 
   const clearAllFilters = () => {
     setSearchTerm('');
