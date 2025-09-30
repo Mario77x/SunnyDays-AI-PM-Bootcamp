@@ -138,12 +138,26 @@ The application uses MongoDB Atlas with the following collections:
 - React Router for navigation
 - Context API for state management
 
-## 📝 Git Status
+## 📝 GitHub Repository Status
 
-Both frontend and backend are committed to their respective Git repositories:
+All code has been pushed to GitHub: **https://github.com/Mario77x/SunnyDays-AI-PM-Bootcamp**
 
-**Frontend**: Initial commit with complete React application
-**Backend**: Two commits - initial setup and Sprint S3 implementation
+**Main Branch** (`main`): Complete frontend React TypeScript application
+- Initial commit: Complete React application (103 files, 21,515+ lines)
+- Setup documentation and project structure
+- Merge commit with remote changes
+
+**Backend Branch** (`backend-main`): FastAPI Python backend
+- Initial commit: Sprint S0 - Environment Setup
+- Sprint S3 commit: Weather Advice Integration (11 files, 1,330+ lines)
+- All backend components and API endpoints
+
+**Repository Structure:**
+```
+GitHub Repository (main branch): Frontend + Documentation
+GitHub Repository (backend-main branch): Backend API
+Local Development: Both frontend/ and backend/ directories
+```
 
 ## 🚀 Next Steps
 
